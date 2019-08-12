@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="excel-payment-processor" />
+        <module name="libra-payment-processor" />
+        <module name="excel2blockchain" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="excel-payment-processor" target="11" />
+      <module name="excel2blockchain" target="11" />
+      <module name="libra-payment-processor" target="11" />
+    </bytecodeTargetLevel>
+  </component>
+</project>
