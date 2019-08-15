@@ -18,7 +18,7 @@ _Do not use this code in production!_
 # Run
 
 * Start the [java-libra-client](https://github.com/ice09/java-libra-client) with mnemonic `a cwm 'chaos crash develop error fix laptop logic machine network patch setup void'`
-* Generated account 0 is Wintermute's sender account. For each hacker account, add the index to the mnemonic, eg. to create Henry's account, use `a cwm 'chaos crash develop error fix laptop logic machine network patch setup void' 1
+* Generated account 0 is Wintermute's sender account. For each hacker account, add the index to the mnemonic, eg. to create Henry's account, use `a cwm 'chaos crash develop error fix laptop logic machine network patch setup void' 1` 
 * Note the account balances and sequence numbers with command `q b INDEX`, eg. `q b 1` for Henry's account
 * Run the java-payment-processor
 * Note how the balances have now changed, account 0 (the sender account) has 700 Libra less, accounts 1-5 balances have increased with 100, 120, .... and the sequence numbers changed accordingly
