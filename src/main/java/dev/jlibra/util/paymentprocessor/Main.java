@@ -2,13 +2,11 @@ package dev.jlibra.util.paymentprocessor;
 
 import dev.jlibra.JLibra;
 import dev.jlibra.KeyUtils;
-import dev.jlibra.admissioncontrol.query.AccountState;
-import dev.jlibra.admissioncontrol.query.ImmutableGetAccountState;
-import dev.jlibra.admissioncontrol.query.ImmutableQuery;
+import dev.jlibra.admissioncontrol.query.SignedTransactionWithProof;
 import dev.jlibra.admissioncontrol.query.UpdateToLatestLedgerResult;
 import dev.jlibra.spring.action.AccountStateQuery;
 import dev.jlibra.spring.action.PeerToPeerTransfer;
-import dev.jlibra.util.ExtKeyUtils;
+import dev.jlibra.util.JLibraUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,9 +19,9 @@ import java.math.BigDecimal;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Security;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @SpringBootApplication
 @ComponentScan(basePackages = {"dev.jlibra"})
@@ -50,6 +48,9 @@ public class Main implements CommandLineRunner {
     @Autowired
     private JLibra jLibra;
 
+    @Autowired
+    private JLibraUtil jLibraUtil;
+
     public static void main(String[] args) {
         Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
         SpringApplication.run(Main.class, args);
@@ -65,9 +66,9 @@ public class Main implements CommandLineRunner {
     }
 
     private long transferLibraToReceiver(String receiverAddress, BigDecimal amount) {
-        long seqNo = fetchLatestSequenceNumber(KeyUtils.toByteArrayLibraAddress(SENDER_PUBLIC_KEY.getEncoded()));
+        long seqNo = jLibraUtil.maybeFindSequenceNumber(KeyUtils.toHexStringLibraAddress(SENDER_PUBLIC_KEY.getEncoded()));
         PeerToPeerTransfer.PeerToPeerTransferReceipt receipt =
-                peerToPeerTransfer.transferFunds(receiverAddress, amount.longValue() * 1_000_000, ExtKeyUtils.publicKeyFromBytes(SENDER_PUBLIC_KEY.getEncoded()), ExtKeyUtils.privateKeyFromBytes(SENDER_PRIVATE_KEY.getEncoded()), jLibra.getGasUnitPrice(), jLibra.getMaxGasAmount());
+                peerToPeerTransfer.transferFunds(receiverAddress, amount.longValue() * 1_000_000, SENDER_PUBLIC_KEY, SENDER_PRIVATE_KEY, jLibra.getGasUnitPrice(), jLibra.getMaxGasAmount());
         System.out.println(" (seqNo " + seqNo + ") " + receipt.getStatus());
         return seqNo;
     }
@@ -101,14 +102,8 @@ public class Main implements CommandLineRunner {
 
     private int fetchEventsForSequenceNumber(byte[] address, long seqNo) {
         UpdateToLatestLedgerResult result = accountStateQuery.queryTransactionsBySequenceNumber(address, seqNo);
-        return result.getAccountTransactionsBySequenceNumber().stream().findFirst().get().getEvents().size();
-    }
-
-    protected long fetchLatestSequenceNumber(byte[] address) {
-        UpdateToLatestLedgerResult result = this.jLibra.getAdmissionControl().updateToLatestLedger(ImmutableQuery.builder().addAccountStateQueries(ImmutableGetAccountState.builder().address(address).build()).build());
-        return (Long)result.getAccountStates().stream().filter((accountState) -> {
-            return Arrays.equals(accountState.getAddress(), address);
-        }).map(AccountState::getSequenceNumber).findFirst().orElse(0L);
+        Optional<SignedTransactionWithProof> trxBySeqNo = result.getAccountTransactionsBySequenceNumber().stream().findFirst();
+        return trxBySeqNo.isPresent() ? trxBySeqNo.get().getEvents().size() : 0;
     }
 
 }
